@@ -4,9 +4,12 @@ $(window).load(function() {
     var CLOSED = 0;
     var schedule = {
         'tasks' : '',
-        'intervals' : '',
+        intervals : [],
         'length' : 0
     }
+
+    var queue = [];
+    var waiting = [];
 
     schedule.length = 100;
     schedule.tasks = []; //actual schedule
@@ -30,6 +33,7 @@ $(window).load(function() {
         this.getStat = function(){ return this.stat; };
         this.getSize = function(){ return this.size; };
         this.setSize = function(a){ this.available = a; };
+        this.getAvailable = function(){ return this.available; };
     };
 
    //now lets fill in the times
@@ -44,7 +48,7 @@ $(window).load(function() {
         while(curr != limit){
             if(schedule.tasks[curr] == null){
                 schedule.tasks[curr] = task;
-                schedule.intervals[start].setSize(schedule.intervals[start].getSize()-task.getTime());
+                schedule.intervals[start].setSize(schedule.intervals[start].getAvailable()-task.getTime());
                 return;
             }else{
                 var time = schedule.tasks[curr].getTime();
@@ -54,6 +58,7 @@ $(window).load(function() {
     }
     //prints all schedule info
     function printInfo(schedule){
+        console.log("Printing information");
         for(var i = 0; i < schedule.length; i ++){
             if(schedule[i] != null){
                 console.log(schedule[i]);
@@ -77,6 +82,70 @@ $(window).load(function() {
         return size;
     }
 
+    function removeTask(task){
+        var index = queue.indexOf(task);
+        queue.splice(index, 1);
+    }
+
+    function addToSchedule(task){
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                if(schedule.intervals[i].getStat() == OPEN){
+                    if(task.getTime() <= schedule.intervals[i].getAvailable()){
+                        addTask(i, task);
+                        console.log("added task to interval");
+                        console.log('task time : ' + task.getTime());
+                        console.log('remaining : ' + schedule.intervals[i].getAvailable());
+                        console.log(task);
+                        console.log('Location : ' + i);
+                        return;
+                    }
+                }
+            }
+        }
+
+        console.log("pushed it to waiting ... ");
+        console.log(task);
+        waiting.push(task);
+    }
+
+    function processQueue(queue, waiting){
+        while(queue.length != 0){
+            var max = 10;
+            var high_pri = [];
+            var shortest = [];
+            for(var i = 0; i < queue.length; i++){
+                var pri = queue[i].getPriority() 
+                if(pri <= max) max = pri;
+            }
+            //now we have the max. Loop through to push highs into separate quque
+            for(var i = 0; i < queue.length; i++){
+                var pri = queue[i].getPriority() 
+                if(pri == max) {
+                    high_pri.push(queue[i]);
+                }
+            }
+            if(high_pri.length > 1){
+                var shortest = 100; //find the shortest value
+                for(var i = 0; i < high_pri.length; i++){
+                    var time = high_pri[i].getTime();
+                    if(time <= shortest) shortest = time;
+                }
+                for(var i = 0; i < high_pri.length; i++){
+                    var time = high_pri[i].getTime() 
+                    if(time == shortest) {
+                        //process this specific task.
+                        removeTask(high_pri[i]);
+                        addToSchedule(high_pri[i]);break;
+                    }
+                }
+            }else{
+                removeTask(high_pri[0]);
+                addToSchedule(high_pri[0]);
+            }
+        }
+    }
+
     //set the closed limits
     schedule.intervals[50] = new Interval(CLOSED, 5);
     schedule.intervals[75] = new Interval(CLOSED, 15);
@@ -97,7 +166,18 @@ $(window).load(function() {
     //initial print
     printInfo(schedule.intervals);
     //now lets add a bunch of tasks to the schedule
-    addTask(55, new Task(OPEN, 20, 0));
+    /*addTask(55, new Task(OPEN, 20, 0));
     printInfo(schedule.tasks);
+    printInfo(schedule.intervals);*/
+
+    queue.push(new Task(OPEN, 10, 5));
+    queue.push(new Task(OPEN, 10, 4));
+    queue.push(new Task(OPEN, 10, 0));
+    queue.push(new Task(OPEN, 2, 5));
+    queue.push(new Task(OPEN, 1, 2));
+
+    processQueue(queue, waiting);
     printInfo(schedule.intervals);
+    console.log("print waiting");
+    printInfo(waiting);
 });
