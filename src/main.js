@@ -33,21 +33,21 @@ $(window).load(function() {
     };
 
    //now lets fill in the times
-    function getStart(intervals){
+    function getStart(){
         //give back the last added intervals
-        return (intervals.length - 1);
+        return (schedule.intervals.length - 1);
     }
 
-    function addTask(intervals, tasks, start, task){
-        var limit = start + intervals[start].getSize();
+    function addTask(start, task){
+        var limit = start + schedule.intervals[start].getSize();
         var curr = start;
         while(curr != limit){
-            if(tasks[curr] == null){
-                tasks[curr] = task;
-                intervals[start].setSize(intervals[start].getSize()-task.getTime());
+            if(schedule.tasks[curr] == null){
+                schedule.tasks[curr] = task;
+                schedule.intervals[start].setSize(schedule.intervals[start].getSize()-task.getTime());
                 return;
             }else{
-                var time = tasks[curr].getTime();
+                var time = schedule.tasks[curr].getTime();
                 curr = (curr+time) % schedule.length;
             }
         }
@@ -62,14 +62,14 @@ $(window).load(function() {
         }
     }
 
-    function getSize(intervals, len,  start, limit){
+    function getSize(start, limit){
         //keep iterating until you hit either the limit or an object
         var size = 0;
         var curr = start;
         while(curr != limit){
-            if(intervals[curr] == null){
+            if(schedule.intervals[curr] == null){
                 size++;
-                curr = (curr+1) % len;
+                curr = (curr+1) % schedule.length;
             }else{
                 return size;
             }
@@ -82,11 +82,11 @@ $(window).load(function() {
     schedule.intervals[75] = new Interval(CLOSED, 15);
     schedule.intervals[95] = new Interval(CLOSED, 5);
     //sets up the rest of the intervals
-    var start_limit = getStart(schedule.intervals); //start at unit 50
+    var start_limit = getStart(); //start at unit 50
     var curr = start_limit + schedule.intervals[start_limit].getSize();
     while (curr != start_limit){
         if(schedule.intervals[curr] == null){
-            var size = getSize(schedule.intervals, schedule.length, curr, start_limit);
+            var size = getSize(curr, start_limit);
             schedule.intervals[curr] = new Interval(OPEN, size);
             curr = (curr+size) % schedule.length;
         }else{
@@ -97,7 +97,7 @@ $(window).load(function() {
     //initial print
     printInfo(schedule.intervals);
     //now lets add a bunch of tasks to the schedule
-    addTask(schedule.intervals, schedule.tasks, 55, new Task(OPEN, 20, 0));
+    addTask(55, new Task(OPEN, 20, 0));
     printInfo(schedule.tasks);
     printInfo(schedule.intervals);
 });
