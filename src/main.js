@@ -56,6 +56,7 @@ $(window).load(function() {
             }
         }
     }
+
     //prints all schedule info
     function printInfo(schedule){
         console.log("Printing information");
@@ -65,6 +66,21 @@ $(window).load(function() {
                 console.log(i);
             }
         }
+    }
+    //prints total fragmentation 
+    function printFragmentationInfo(){
+        console.log("==========Printing fragmentation information=========");
+        var total = 0;
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                if(schedule.intervals[i].getStat() == OPEN){
+                    var available = schedule.intervals[i].getAvailable();
+                    console.log('Location['+i+'] : ' + available + '/' + schedule.intervals[i].getSize());
+                    total += available;
+                }
+            }
+        }
+        console.log("Total fragmentation: " + total);
     }
 
     function getSize(start, limit){
@@ -87,6 +103,7 @@ $(window).load(function() {
         queue.splice(index, 1);
     }
 
+    //first fit interval approach
     function addToSchedule(task){
         for(var i = 0; i < schedule.intervals.length; i++){
             if(schedule.intervals[i] != null){
@@ -97,7 +114,7 @@ $(window).load(function() {
                         console.log('task time : ' + task.getTime());
                         console.log('remaining : ' + schedule.intervals[i].getAvailable());
                         console.log(task);
-                        console.log('Location : ' + i);
+                        console.log('location : ' + i);
                         return;
                     }
                 }
@@ -107,6 +124,27 @@ $(window).load(function() {
         console.log("pushed it to waiting ... ");
         console.log(task);
         waiting.push(task);
+    }
+
+    function bestFit(task){
+        var frag_limit = 500; //set high
+        var least_frag;
+        //find the interval with least frag
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                if(schedule.intervals[i].getStat() == OPEN){
+                    var available = schedule.intervals[i].getAvailable();
+                    var task_time = task.getTime();
+                    var frag = available - task_time;
+                    //console.log("TT: " + task_time + " AVAIL : " + available + " frag amt : " + frag);
+                    if(frag <= frag_limit && frag >= 0){
+                        frag_limit = frag;
+                        least_frag = i;
+                    }
+                }
+            }
+        }
+        //console.log("Least frag: " + least_frag);
     }
 
     function processQueue(queue, waiting){
@@ -175,9 +213,12 @@ $(window).load(function() {
     queue.push(new Task(OPEN, 10, 0));
     queue.push(new Task(OPEN, 2, 5));
     queue.push(new Task(OPEN, 1, 2));
+    queue.push(new Task(OPEN, 5, 5));
+    queue.push(new Task(OPEN, 5, 5));
 
     processQueue(queue, waiting);
     printInfo(schedule.intervals);
     console.log("print waiting");
     printInfo(waiting);
+    printFragmentationInfo();
 });
