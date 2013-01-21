@@ -21,6 +21,7 @@ $(window).load(function() {
         this.time = b;
         this.priority = c;
         this.getStat = function(){ return this.stat; };
+        this.setTime = function(a){ this.time = a; };
         this.getTime = function(){ return this.time; };
         this.getPriority = function(){ return this.priority; };
     };
@@ -120,7 +121,7 @@ $(window).load(function() {
                 }
             }
         }
-
+        //if it doesn't fit
         console.log("pushed it to waiting ... ");
         console.log(task);
         waiting.push(task);
@@ -147,6 +148,81 @@ $(window).load(function() {
         //console.log("Least frag: " + least_frag);
     }
 
+    //this could be optimized by keeping tack when adding intervals
+    function getMaxInterval(){
+        var max = 0;
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                //what if none are open? this needs to be checked
+                if(schedule.intervals[i].getStat() == OPEN){
+                    var available = schedule.intervals[i].getAvailable();
+                    if (available >= max)
+                        max = available;
+                    }
+                }
+            }
+        return max;
+    }
+
+    function getClosestFit(task){
+        var frag_limit = 500; //set high
+        var least_frag;
+        //find the interval with least frag
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                if(schedule.intervals[i].getStat() == OPEN){
+                    var available = schedule.intervals[i].getAvailable();
+                    var task_time = task.getTime();
+                    var frag = Math.abs(available - task_time);
+                    if(frag <= frag_limit){
+                        frag_limit = frag;
+                        least_frag = i;
+                    }
+                }
+            }
+        }
+        return least_frag;
+    }
+
+    //cuts the task down to the new size and adds rest to waiting.
+    function taskSlice(task, new_time){
+        //get the difference
+        var diff = task.getTime() - new_time;
+        var task_tail = new Task(OPEN,diff,task.getPriority());
+        task.setTime(new_time);
+        waiting.push(task_tail);
+        //print the waiting.
+        //console.log("Print waiting after slice");
+        //printInfo(waiting);
+        //console.log("Size of curr task after change : " + task.getTime());
+    }
+
+    function taskManager(task){
+    /*okay, so some tasks are high pri but they do not friggin FIT. I don't want to always put it on waiting.
+    maybe we'll only do it for tasks of certain size or if they meet a specific avail/size ratio.
+    for now, we'll just focus on analyzing the task for best fit and splitting it
+    if manager determines that task needs splitting, do best fit
+    if it does not need splitting (so basically this is where we determien our algo. Then do first fit.*/
+    
+        //if bigger than all of the available slots
+        if(task.getTime() > getMaxInterval()){
+            //figure out a best fit to split.
+            var closest = getClosestFit(task);
+            var size = schedule.intervals[closest].getAvailable();
+            console.log("Closest fit for this big boy is : " + closest + "With " + size);
+            //get the size for this, and split it along.
+            //if task is breakable (we can split)
+            //only split if its NOT zero.
+            if(size > 0) //threshhold for split
+                taskSlice(task, size);
+            else
+                console.log("Sorry, no more space"); //checking full should happen elsewhere.
+        }else{
+            console.log("Nope we have fit");
+        }
+    }
+
+    //finds the task to process based on length and priority
     function processQueue(queue, waiting){
         while(queue.length != 0){
             var max = 10;
@@ -174,12 +250,14 @@ $(window).load(function() {
                     if(time == shortest) {
                         //process this specific task.
                         removeTask(high_pri[i]);
-                        addToSchedule(high_pri[i]);break;
+                        taskManager(high_pri[i]); //tseting
+                        addToSchedule(high_pri[i]);break; //first fit
                     }
                 }
             }else{
                 removeTask(high_pri[0]);
-                addToSchedule(high_pri[0]);
+                taskManager(high_pri[0]); //tseting
+                addToSchedule(high_pri[0]); //first fit
             }
         }
     }
@@ -210,12 +288,17 @@ $(window).load(function() {
 
     queue.push(new Task(OPEN, 10, 5));
     queue.push(new Task(OPEN, 10, 4));
-    queue.push(new Task(OPEN, 10, 0));
+    queue.push(new Task(OPEN, 10, 0)); //testing split
     queue.push(new Task(OPEN, 2, 5));
     queue.push(new Task(OPEN, 1, 2));
     queue.push(new Task(OPEN, 5, 5));
     queue.push(new Task(OPEN, 5, 5));
+    queue.push(new Task(OPEN, 30, 5));
 
+    //these should be in waiting.
+    queue.push(new Task(OPEN, 100, 5));
+    queue.push(new Task(OPEN, 75, 5));
+    queue.push(new Task(OPEN, 75, 5));
     processQueue(queue, waiting);
     printInfo(schedule.intervals);
     console.log("print waiting");
