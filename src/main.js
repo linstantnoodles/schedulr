@@ -11,7 +11,7 @@ $(window).load(function() {
     var queue = [];
     var waiting = [];
 
-    schedule.length = 100;
+    schedule.length = 1440;
     schedule.tasks = []; //actual schedule
     schedule.intervals = []; //interval info
 
@@ -203,8 +203,8 @@ $(window).load(function() {
     for now, we'll just focus on analyzing the task for best fit and splitting it
     if manager determines that task needs splitting, do best fit
     if it does not need splitting (so basically this is where we determien our algo. Then do first fit.*/
-    
         //if bigger than all of the available slots
+//    console.log(task);
         if(task.getTime() > getMaxInterval()){
             //figure out a best fit to split.
             var closest = getClosestFit(task);
@@ -222,7 +222,7 @@ $(window).load(function() {
         }
     }
 
-    //finds the task to process based on length and priority
+   //finds the task to process based on length and priority
     function processQueue(queue, waiting){
         while(queue.length != 0){
             var max = 10;
@@ -256,16 +256,58 @@ $(window).load(function() {
                 }
             }else{
                 removeTask(high_pri[0]);
+                console.log(high_pri[0]);
                 taskManager(high_pri[0]); //tseting
                 addToSchedule(high_pri[0]); //first fit
             }
         }
     }
 
+    function renderTasks(cal, schedule){
+        console.log(cal);
+        for(var i = 0; i < schedule.length; i ++){
+            if(schedule[i] != null){
+                var task = schedule[i];
+                var zone_start = i;
+                var zone_end = zone_start + task.getTime();
+                cal.addMarkedTimespan({
+                    days: new Date(),
+                    zones: [zone_start, zone_end],
+                    css:   "blue_section",
+                    html:  task.getTime() + " minute task",
+                    type:  "dhx_time_block"
+                });
+            }
+        }
+    }
+
+    function renderIntervals(cal, schedule){
+        console.log(cal);
+        for(var i = 0; i < schedule.length; i ++){
+            if(schedule[i] != null){
+                var interval = schedule[i];
+                var zone_start = i;
+                var zone_end = zone_start + interval.getSize();
+                if(interval.getStat() == CLOSED){
+                    cal.addMarkedTimespan({
+                        days: new Date(),
+                        zones: [zone_start, zone_end],
+                        css:   "gray_section",
+                        type:  "dhx_time_block"
+                    });
+                }
+            }
+        }
+    }
+
+
     //set the closed limits
     schedule.intervals[50] = new Interval(CLOSED, 5);
     schedule.intervals[75] = new Interval(CLOSED, 15);
-    schedule.intervals[95] = new Interval(CLOSED, 5);
+    schedule.intervals[95] = new Interval(CLOSED, 100);
+    schedule.intervals[200] = new Interval(CLOSED, 80);
+    schedule.intervals[500] = new Interval(CLOSED, 5);
+    schedule.intervals[900] = new Interval(CLOSED, 200);
     //sets up the rest of the intervals
     var start_limit = getStart(); //start at unit 50
     var curr = start_limit + schedule.intervals[start_limit].getSize();
@@ -286,22 +328,40 @@ $(window).load(function() {
     printInfo(schedule.tasks);
     printInfo(schedule.intervals);*/
 
-    queue.push(new Task(OPEN, 10, 5));
-    queue.push(new Task(OPEN, 10, 4));
+    queue.push(new Task(OPEN, 60, 1));
+    queue.push(new Task(OPEN, 200, 3));
+    queue.push(new Task(OPEN, 100, 1));
+    queue.push(new Task(OPEN, 30, 5));
+    queue.push(new Task(OPEN, 20, 1));
+    /*queue.push(new Task(OPEN, 10, 4));
     queue.push(new Task(OPEN, 10, 0)); //testing split
     queue.push(new Task(OPEN, 2, 5));
     queue.push(new Task(OPEN, 1, 2));
     queue.push(new Task(OPEN, 5, 5));
     queue.push(new Task(OPEN, 5, 5));
-    queue.push(new Task(OPEN, 30, 5));
+    queue.push(new Task(OPEN, 30, 5));*/
 
     //these should be in waiting.
-    queue.push(new Task(OPEN, 100, 5));
+    /*queue.push(new Task(OPEN, 100, 5));
     queue.push(new Task(OPEN, 75, 5));
-    queue.push(new Task(OPEN, 75, 5));
+    queue.push(new Task(OPEN, 75, 5));*/
     processQueue(queue, waiting);
     printInfo(schedule.intervals);
     console.log("print waiting");
     printInfo(waiting);
     printFragmentationInfo();
+
+     /*   cal.addmarkedtimespan({
+                    days:  new date(),
+                    zones: [zone_start, zone_end],
+                    css:   "blue_section",
+                    html: "Motherfucking wrap",
+                    type:  "dhx_time_block"
+                });*/
+
+    //now we create the calendar and loop thru
+    scheduler.init('scheduler_here',null,"day");
+    renderTasks(scheduler, schedule.tasks);
+    renderIntervals(scheduler, schedule.intervals);
+    scheduler.updateView();
 });
