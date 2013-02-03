@@ -328,11 +328,12 @@ $(window).load(function() {
     printInfo(schedule.tasks);
     printInfo(schedule.intervals);*/
 
-    queue.push(new Task(OPEN, 60, 1));
+    queue.push(new Task(OPEN, 60, 2));
+    queue.push(new Task(OPEN, 300, 1));
     queue.push(new Task(OPEN, 200, 3));
     queue.push(new Task(OPEN, 100, 1));
     queue.push(new Task(OPEN, 30, 5));
-    queue.push(new Task(OPEN, 20, 1));
+    queue.push(new Task(OPEN, 40, 2));
     /*queue.push(new Task(OPEN, 10, 4));
     queue.push(new Task(OPEN, 10, 0)); //testing split
     queue.push(new Task(OPEN, 2, 5));
