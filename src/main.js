@@ -54,6 +54,7 @@ $(window).load(function() {
                     parseInt(duration.val()),
                     parseInt(priority.val())
                 );
+                //printInfo(schedule.tasks);
                 $( this ).dialog( "close" );
               }
             },
@@ -141,6 +142,7 @@ $(window).load(function() {
             }
         }
     }
+
     //prints total fragmentation 
     function printFragmentationInfo(){
         console.log("==========Printing fragmentation information=========");
@@ -313,7 +315,7 @@ $(window).load(function() {
                 }
             }
             if(high_pri.length > 1){
-                var shortest = 100; //find the shortest value
+                var shortest = 2000; //find the shortest value
                 for(var i = 0; i < high_pri.length; i++){
                     var time = high_pri[i].getTime();
                     if(time <= shortest) shortest = time;
@@ -338,10 +340,13 @@ $(window).load(function() {
 
     function renderTasks(cal, schedule){
         console.log(cal);
+        console.log("----------RENDERING----------");
         for(var i = 0; i < schedule.length; i ++){
             if(schedule[i] != null){
+                console.log("adding");
                 var task = schedule[i];
                 var zone_start = i;
+                console.log("STARTING : " + zone_start);
                 var zone_end = zone_start + task.getTime();
                 cal.addMarkedTimespan({
                     days: new Date(),
@@ -373,8 +378,38 @@ $(window).load(function() {
         }
     }
 
+    //100.200.150?
+    function resetSchedule(){
+        scheduler.deleteMarkedTimespan();
+        //reprocess the intervals
+        for(var i = 0; i < schedule.tasks.length; i ++){
+            if(schedule.tasks[i] != null){
+                /*var task = schedule.tasks[i];
+                var zone_start = i;
+                var zone_end = zone_start + task.getTime();
+                scheduler.deleteMarkedTimespan({
+                    days: new Date(),
+                    zones: [zone_start, zone_end],
+                }); */
+                queue.push(schedule.tasks[i]);
+                schedule.tasks[i] = null;
+            }
+        }
+        for(var i = 0; i < schedule.intervals.length; i++){
+            if(schedule.intervals[i] != null){
+                if(schedule.intervals[i].getStat() == OPEN){
+                    var size = schedule.intervals[i].getSize();
+                    schedule.intervals[i].setSize(size);
+                }
+                }
+            }
+        console.log("CURRENT QUEUE ");
+        printInfo(queue);
+        }
+
+
     function updateSchedule(duration, priority){
-         //move tasks back onto the queue. Pretty much reset.
+         resetSchedule();
          queue.push(new Task(OPEN, duration, priority));
          processQueue(queue, waiting);
          renderTasks(scheduler, schedule.tasks);
@@ -393,9 +428,9 @@ $(window).load(function() {
     //sets up the rest of the intervals
     var start_limit = getStart(); //start at unit 50
     var curr = start_limit + schedule.intervals[start_limit].getSize();
-
+    //alert("orginal len " + schedule.intervals.length);
     //creates the interval regions
-    while (curr != start_limit){
+    while(curr != start_limit){
         if(schedule.intervals[curr] == null){
             var size = getSize(curr, start_limit);
             schedule.intervals[curr] = new Interval(OPEN, size);
@@ -413,10 +448,10 @@ $(window).load(function() {
     printInfo(schedule.tasks);
     printInfo(schedule.intervals);*/
 
-    /*queue.push(new Task(OPEN, 60, 2));
-    queue.push(new Task(OPEN, 300, 1));
-    queue.push(new Task(OPEN, 200, 3));
-    queue.push(new Task(OPEN, 100, 1));
+    /*queue.push(new Task(OPEN, 100, 1));
+    queue.push(new Task(OPEN, 200, 1));
+    queue.push(new Task(OPEN, 150, 1));*/
+   /* queue.push(new Task(OPEN, 100, 1));
     queue.push(new Task(OPEN, 30, 5));
     queue.push(new Task(OPEN, 40, 2));*/
     /*queue.push(new Task(OPEN, 10, 4));
