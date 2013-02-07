@@ -59,16 +59,22 @@
         </div>
         <div class="dhx_cal_data"> </div>
 </div>
-<div id="dialog-form" title="Create new user">
+<div id="dialog-form" title="New task">
   <p class="validateTips">All form fields are required.</p>
   <form>
   <fieldset>
-    <label for="name">Name</label>
+    <label for="name">Task name</label>
     <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />
-    <label for="email">Email</label>
-    <input type="text" name="email" id="email" value="" class="text ui-widget-content ui-corner-all" />
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" value="" class="text ui-widget-content ui-corner-all" />
+    <label for="priority">Task Priority</label>
+        <select name="priority" id="priority">
+            <option value="1">Super Important</option>
+            <option value="2">Very Important</option>
+            <option value="3">Kinda Important</option>
+            <option value="4">Not Important</option>
+            <option value="5">Whatever</option>
+        </select>
+    <label for="duration">Task Length (minutes)</label>
+    <input type="text" name="duration" id="duration"/>
   </fieldset>
   </form>
 </div>
