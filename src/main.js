@@ -1,11 +1,10 @@
 $(window).load(function() {
     $(function() {
-        var name = $( "#name" ),
-          email = $( "#email" ),
-          password = $( "#password" ),
-          allFields = $( [] ).add( name ).add( email ).add( password ),
-          tips = $( ".validateTips" );
-     
+        var name = $( "#name" );
+        var priority = $("#priority");
+        var duration = $( "#duration" );
+        var allFields = $( [] ).add( name ).add( priority ).add( duration );
+        var tips = $( ".validateTips" );
         function updateTips( t ) {
           tips
             .text( t )
@@ -14,7 +13,6 @@ $(window).load(function() {
             tips.removeClass( "ui-state-highlight", 1500 );
           }, 500 );
         }
-     
         function checkLength( o, n, min, max ) {
           if ( o.val().length > max || o.val().length < min ) {
             o.addClass( "ui-state-error" );
@@ -25,7 +23,6 @@ $(window).load(function() {
             return true;
           }
         }
-     
         function checkRegexp( o, regexp, n ) {
           if ( !( regexp.test( o.val() ) ) ) {
             o.addClass( "ui-state-error" );
@@ -35,7 +32,6 @@ $(window).load(function() {
             return true;
           }
         }
-     
         $( "#dialog-form" ).dialog({
           autoOpen: false,
           height: 300,
@@ -44,24 +40,20 @@ $(window).load(function() {
           buttons: {
             "Create an account": function() {
               var bValid = true;
-              allFields.removeClass( "ui-state-error" );
-     
+              //allFields.removeClass( "ui-state-error" );
               /*bValid = bValid && checkLength( name, "username", 3, 16 );
               bValid = bValid && checkLength( email, "email", 6, 80 );
               bValid = bValid && checkLength( password, "password", 5, 16 );
-     
               bValid = bValid && checkRegexp( name, /^[a-z]([0-9a-z_])+$/i, "Username may consist of a-z, 0-9, underscores, begin with a letter." );
               // From jquery.validate.js (by joern), contributed by Scott Gonzalez: http://projects.scottsplayground.com/email_address_validation/
               bValid = bValid && checkRegexp( email, /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i, "eg. ui@jquery.com" );
               bValid = bValid && checkRegexp( password, /^([0-9a-zA-Z])+$/, "Password field only allow : a-z 0-9" );
-                */ 
+                */
               if ( bValid ) {
-                /*$( "#users tbody" ).append( "<tr>" +
-                  "<td>" + name.val() + "</td>" +
-                  "<td>" + email.val() + "</td>" +
-                  "<td>" + password.val() + "</td>" +
-                "</tr>" );*/
-                updateSchedule();
+                updateSchedule(
+                    parseInt(duration.val()),
+                    parseInt(priority.val())
+                );
                 $( this ).dialog( "close" );
               }
             },
@@ -80,7 +72,7 @@ $(window).load(function() {
             $( "#dialog-form" ).dialog( "open" );
           });
     });
-
+    //end of dialog box
     var OPEN = 1;
     var CLOSED = 0;
     var schedule = {
@@ -92,7 +84,7 @@ $(window).load(function() {
     var queue = [];
     var waiting = [];
 
-    schedule.length = 1440;
+    schedule.length = 1440; //60 * 24
     schedule.tasks = []; //actual schedule
     schedule.intervals = []; //interval info
 
@@ -355,7 +347,7 @@ $(window).load(function() {
                     days: new Date(),
                     zones: [zone_start, zone_end],
                     css:   "blue_section",
-                    html:  task.getTime() + " minute task",
+                    html:  task.getTime() + " minute task" + "with " + task.getPriority() + " P",
                     type:  "dhx_time_block"
                 });
             }
@@ -381,8 +373,9 @@ $(window).load(function() {
         }
     }
 
-    function updateSchedule(){
-         queue.push(new Task(OPEN, 200, 3));
+    function updateSchedule(duration, priority){
+         //move tasks back onto the queue. Pretty much reset.
+         queue.push(new Task(OPEN, duration, priority));
          processQueue(queue, waiting);
          renderTasks(scheduler, schedule.tasks);
          renderIntervals(scheduler, schedule.intervals);
@@ -390,7 +383,7 @@ $(window).load(function() {
     }
 
 
-    //set the closed limits
+    //set the closed limits. We may want this to be manual in the future.
     schedule.intervals[50] = new Interval(CLOSED, 5);
     schedule.intervals[75] = new Interval(CLOSED, 15);
     schedule.intervals[95] = new Interval(CLOSED, 100);
@@ -400,6 +393,8 @@ $(window).load(function() {
     //sets up the rest of the intervals
     var start_limit = getStart(); //start at unit 50
     var curr = start_limit + schedule.intervals[start_limit].getSize();
+
+    //creates the interval regions
     while (curr != start_limit){
         if(schedule.intervals[curr] == null){
             var size = getSize(curr, start_limit);
@@ -412,6 +407,7 @@ $(window).load(function() {
     }
     //initial print
     printInfo(schedule.intervals);
+
     //now lets add a bunch of tasks to the schedule
     /*addTask(55, new Task(OPEN, 20, 0));
     printInfo(schedule.tasks);
@@ -441,14 +437,6 @@ $(window).load(function() {
     console.log("print waiting");
     printInfo(waiting);
     printFragmentationInfo();
-
-    /*   cal.addmarkedtimespan({
-                    days:  new date(),
-                    zones: [zone_start, zone_end],
-                    css:   "blue_section",
-                    html: "Motherfucking wrap",
-                    type:  "dhx_time_block"
-                });*/
 
     //now we create the calendar and loop thru
     scheduler.init('scheduler_here',null,"day");
