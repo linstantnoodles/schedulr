@@ -17,7 +17,8 @@ $(window).load(function() {
               if ( bValid ) {
                 updateSchedule(
                     parseInt(duration.val()),
-                    parseInt(priority.val())
+                    parseInt(priority.val()),
+                    name.val()
                 );
                 $( this ).dialog( "close" );
               }
@@ -53,10 +54,12 @@ $(window).load(function() {
     schedule.intervals = []; //interval info
 
     //task block
-    function Task(a, b, c){
+    function Task(a, b, c, d){
         this.stat = a;
         this.time = b;
         this.priority = c;
+        this.description = d;
+        this.getDescription = function() {return this.description; };
         this.getStat = function(){ return this.stat; };
         this.setTime = function(a){ this.time = a; };
         this.getTime = function(){ return this.time; };
@@ -228,7 +231,7 @@ $(window).load(function() {
     function taskSlice(task, new_time){
         //get the difference
         var diff = task.getTime() - new_time;
-        var task_tail = new Task(OPEN,diff,task.getPriority());
+        var task_tail = new Task(OPEN,diff,task.getPriority(), task.getDescription());
         task.setTime(new_time);
         waiting.push(task_tail);
     }
@@ -296,15 +299,17 @@ $(window).load(function() {
         for(var i = 0; i < schedule.length; i ++){
             if(schedule[i] != null){
                 console.log("adding");
-                var task = schedule[i];
-                var zone_start = i;
+                var task = schedule[i],
+                    zone_start = i;
                 //console.log("STARTING : " + zone_start);
                 var zone_end = zone_start + task.getTime();
                 cal.addMarkedTimespan({
                     days: new Date(),
                     zones: [zone_start, zone_end],
                     css:   "blue_section",
-                    html:  task.getTime() + " minute task" + "with " + task.getPriority() + " P",
+                    html:  "Description: " + task.getDescription() + 
+                            " Time: " + task.getTime() + 
+                            " Priority: " + task.getPriority(),
                     type:  "dhx_time_block"
                 });
             }
@@ -315,9 +320,9 @@ $(window).load(function() {
         console.log(cal);
         for(var i = 0; i < schedule.length; i ++){
             if(schedule[i] != null){
-                var interval = schedule[i];
-                var zone_start = i;
-                var zone_end = zone_start + interval.getSize();
+                var interval = schedule[i],
+                    zone_start = i,
+                    zone_end = zone_start + interval.getSize();
                 if(interval.getStat() == CLOSED){
                     cal.addMarkedTimespan({
                         days: new Date(),
@@ -351,9 +356,9 @@ $(window).load(function() {
         }
     }
 
-    function updateSchedule(duration, priority){
+    function updateSchedule(duration, priority, description){
          resetSchedule();
-         queue.push(new Task(OPEN, duration, priority));
+         queue.push(new Task(OPEN, duration, priority, description));
          processQueue(queue, waiting);
          renderTasks(scheduler, schedule.tasks);
          renderIntervals(scheduler, schedule.intervals);
