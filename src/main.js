@@ -1,10 +1,10 @@
 $(window).load(function() {
   //dialog handler
   $(function() {
-    var name = $("#name");
-    var priority = $("#priority");
-    var duration = $("#duration");
-    var allFields = $([]).add(name).add(priority).add(duration);
+    var name = $("#name"),
+      priority = $("#priority"),
+      duration = $("#duration"),
+      allFields = $([]).add(name).add(priority).add(duration);
 
     $("#dialog-form").dialog({
       autoOpen : false,
@@ -32,8 +32,9 @@ $(window).load(function() {
     });
   });
   //end of dialog box
-  var OPEN = 1;
-  var CLOSED = 0;
+  var OPEN = 1,
+      CLOSED = 0;
+      
   var schedule = {
     'tasks' : '',
     intervals : [],
@@ -99,16 +100,18 @@ $(window).load(function() {
   }
 
   function addTask(start, task) {
-    var limit = start + schedule.intervals[start].getSize();
-    var curr = start;
+    var limit = start + schedule.intervals[start].getSize(),
+        curr = start,
+        available,
+        time;
     while(curr != limit) {
       if(schedule.tasks[curr] == null) {
         schedule.tasks[curr] = task;
-        var available = schedule.intervals[start].getAvailable();
+        available = schedule.intervals[start].getAvailable();
         schedule.intervals[start].setSize(available - task.getTime());
         return;
       } else {
-        var time = schedule.tasks[curr].getTime();
+        time = schedule.tasks[curr].getTime();
         curr = (curr + time) % schedule.length;
       }
     }
@@ -143,8 +146,8 @@ $(window).load(function() {
 
   function getSize(start, limit) {
     //keep iterating until you hit either the limit or an object
-    var size = 0;
-    var curr = start;
+    var size = 0,
+        curr = start;
     while(curr != limit) {
       if(schedule.intervals[curr] == null) {
         size++;
@@ -163,7 +166,8 @@ $(window).load(function() {
 
   //first fit interval approach
   function addToSchedule(task) {
-    for(var i = 0; i < schedule.intervals.length; i++) {
+    var i;
+    for(i = 0; i < schedule.intervals.length; i++) {
       if(schedule.intervals[i] != null) {
         if(schedule.intervals[i].getStat() == OPEN) {
           if(task.getTime() <= schedule.intervals[i].getAvailable()) {
@@ -185,16 +189,19 @@ $(window).load(function() {
   }
 
   function bestFit(task) {
-    var frag_limit = 500;
-    //set high
-    var least_frag;
+    var frag_limit = 500,
+        least_frag,
+        available,
+        task_time,
+        frag,
+        i;
     //find the interval with least frag
     for(var i = 0; i < schedule.intervals.length; i++) {
       if(schedule.intervals[i] != null) {
         if(schedule.intervals[i].getStat() == OPEN) {
-          var available = schedule.intervals[i].getAvailable();
-          var task_time = task.getTime();
-          var frag = available - task_time;
+          available = schedule.intervals[i].getAvailable();
+          task_time = task.getTime();
+          frag = available - task_time;
           //console.log("TT: " + task_time + " AVAIL : " + available + " frag amt : " + frag);
           if(frag <= frag_limit && frag >= 0) {
             frag_limit = frag;
@@ -207,12 +214,14 @@ $(window).load(function() {
 
   //this could be optimized by keeping tack when adding intervals
   function getMaxInterval() {
-    var max = 0;
-    for(var i = 0; i < schedule.intervals.length; i++) {
+    var max = 0,
+        available,
+        i;
+    for(i = 0; i < schedule.intervals.length; i++) {
       if(schedule.intervals[i] != null) {
         //what if none are open? this needs to be checked
         if(schedule.intervals[i].getStat() == OPEN) {
-          var available = schedule.intervals[i].getAvailable();
+          available = schedule.intervals[i].getAvailable();
           if(available >= max)
             max = available;
         }
@@ -222,16 +231,19 @@ $(window).load(function() {
   }
 
   function getClosestFit(task) {
-    var frag_limit = 500;
-    //set high
-    var least_frag;
+    var frag_limit = 500,
+        least_frag,
+        available,
+        task_time,
+        frag,
+        i;
     //find the interval with least frag
-    for(var i = 0; i < schedule.intervals.length; i++) {
+    for(i = 0; i < schedule.intervals.length; i++) {
       if(schedule.intervals[i] != null) {
         if(schedule.intervals[i].getStat() == OPEN) {
-          var available = schedule.intervals[i].getAvailable();
-          var task_time = task.getTime();
-          var frag = Math.abs(available - task_time);
+          available = schedule.intervals[i].getAvailable();
+          task_time = task.getTime();
+          frag = Math.abs(available - task_time);
           if(frag <= frag_limit) {
             frag_limit = frag;
             least_frag = i;
@@ -244,18 +256,19 @@ $(window).load(function() {
 
   //cuts the task down to the new size and adds rest to waiting.
   function taskSlice(task, new_time) {
-    //get the difference
     var diff = task.getTime() - new_time;
-    var task_tail = new Task(OPEN, diff, task.getPriority(), task.getDescription());
+        task_tail = new Task(OPEN, diff, task.getPriority(), task.getDescription());
     task.setTime(new_time);
     waiting.push(task_tail);
   }
 
   function taskManager(task) {
+    var closest,
+        size;
     if(task.getTime() > getMaxInterval()) {
       //figure out a best fit to split.
-      var closest = getClosestFit(task);
-      var size = schedule.intervals[closest].getAvailable();
+      closest = getClosestFit(task);
+      size = schedule.intervals[closest].getAvailable();
       console.log("Closest fit for this big boy is : " + closest + "With " + size);
       //if task is breakable (we can split)
       //only split if its NOT zero.
@@ -271,29 +284,36 @@ $(window).load(function() {
 
   //finds the task to process based on length and priority
   function processQueue(queue, waiting) {
+    var max_priority,
+        high_pri,
+        curr_priority,
+        shortest_duration,
+        time,
+        i;
     while(queue.length != 0) {
-      var max_priority = 10, high_pri = [];
-      for(var i = 0; i < queue.length; i++) {
-        var curr_priority = queue[i].getPriority();
+      max_priority = 10, 
+      high_pri = [];
+      for(i = 0; i < queue.length; i++) {
+        curr_priority = queue[i].getPriority();
         if(curr_priority < max_priority)
           max_priority = curr_priority;
       }
       //now we have the max. Loop through to push highs into separate quque
-      for(var i = 0; i < queue.length; i++) {
+      for(i = 0; i < queue.length; i++) {
         if(queue[i].getPriority() == max_priority)
           high_pri.push(queue[i]);
       }
       //if more than one task with same priority
       if(high_pri.length > 1) {
-        var shortest_duration = 2000;
+        shortest_duration = 2000;
         //find the shortest_duration value
-        for(var i = 0; i < high_pri.length; i++) {
-          var time = high_pri[i].getTime();
+        for(i = 0; i < high_pri.length; i++) {
+          time = high_pri[i].getTime();
           if(time < shortest_duration)
             shortest_duration = time;
         }
 
-        for(var i = 0; i < high_pri.length; i++) {
+        for(i = 0; i < high_pri.length; i++) {
           if(high_pri[i].getTime() == shortest_duration) {
             handleTask(high_pri[i]);
             break;
@@ -312,18 +332,25 @@ $(window).load(function() {
   }
 
   function renderTasks(cal, schedule) {
+    var task,
+        zone_end,
+        i;
     //console.log("----------RENDERING----------");
-    for(var i = 0; i < schedule.length; i++) {
+    for(i = 0; i < schedule.length; i++) {
       if(schedule[i] != null) {
         console.log("adding");
-        var task = schedule[i], zone_start = i;
+        task = schedule[i], zone_start = i;
         //console.log("STARTING : " + zone_start);
-        var zone_end = zone_start + task.getTime();
+        zone_end = zone_start + task.getTime();
         cal.addMarkedTimespan({
           days : new Date(),
           zones : [zone_start, zone_end],
           css : "blue_section",
-          html : "Description: " + task.getDescription() + " Time: " + task.getTime() + " Priority: " + task.getPriority(),
+          html : "Description: " + 
+                 task.getDescription() + 
+                 " Time: " + task.getTime() + 
+                 " Priority: " + 
+                 task.getPriority(),
           type : "dhx_time_block"
         });
       }
@@ -331,10 +358,14 @@ $(window).load(function() {
   }
 
   function renderIntervals(cal, schedule) {
+    var interval,
+        i;
     console.log(cal);
-    for(var i = 0; i < schedule.length; i++) {
+    for(i = 0; i < schedule.length; i++) {
       if(schedule[i] != null) {
-        var interval = schedule[i], zone_start = i, zone_end = zone_start + interval.getSize();
+            interval = schedule[i], 
+            zone_start = i, 
+            zone_end = zone_start + interval.getSize();
         if(interval.getStat() == CLOSED) {
           cal.addMarkedTimespan({
             days : new Date(),
@@ -348,20 +379,22 @@ $(window).load(function() {
   }
 
   function resetSchedule() {
+    var size,
+        i;
     //reset the scheduler ui
     scheduler.deleteMarkedTimespan();
     //clear the tasks and move to queue
-    for(var i = 0; i < schedule.tasks.length; i++) {
+    for(i = 0; i < schedule.tasks.length; i++) {
       if(schedule.tasks[i] != null) {
         queue.push(schedule.tasks[i]);
         schedule.tasks[i] = null;
       }
     }
     //reset the intervals
-    for(var i = 0; i < schedule.intervals.length; i++) {
+    for(i = 0; i < schedule.intervals.length; i++) {
       if(schedule.intervals[i] != null) {
         if(schedule.intervals[i].getStat() == OPEN) {
-          var size = schedule.intervals[i].getSize();
+          size = schedule.intervals[i].getSize();
           schedule.intervals[i].setSize(size);
         }
       }
