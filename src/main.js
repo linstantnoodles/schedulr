@@ -40,8 +40,8 @@ $(window).load(function() {
     intervals : [],
     'length' : 0
   }
-
-  var queue = [];
+  
+  var queue = []; //tracks all tasks
   var waiting = [];
 
   schedule.length = 1440;
@@ -158,7 +158,8 @@ $(window).load(function() {
     }
     return size;
   }
-
+  
+  //pops task off the queue
   function removeTask(task) {
     var index = queue.indexOf(task);
     queue.splice(index, 1);
@@ -400,17 +401,37 @@ $(window).load(function() {
       }
     }
   }
-
+  
+  //gets called after each add. Schedule is cleared.
   function updateSchedule(duration, priority, description) {
     resetSchedule();
     queue.push(new Task(OPEN, duration, priority, description));
     processQueue(queue, waiting);
-    renderTasks(scheduler, schedule.tasks);
     renderIntervals(scheduler, schedule.intervals);
+    renderTasks(scheduler, schedule.tasks);
     scheduler.updateView();
   }
+  
+  //creates the interval regions
+  function createIntervals(){
+    //sets up the rest of the intervals
+    var start_limit = getStart(),
+        curr = start_limit + schedule.intervals[start_limit].getSize(),
+        size,
+        time;
+    while(curr != start_limit) {
+      if(schedule.intervals[curr] == null) {
+        size = getSize(curr, start_limit);
+        schedule.intervals[curr] = new Interval(OPEN, size);
+        curr = (curr + size) % schedule.length;
+      } else {
+        time = schedule.intervals[curr].getSize();
+        curr = (curr + time) % schedule.length;
+      }
+    }
+  }
 
-  //set the closed limits. We may want this to be manual in the future.
+  //set the closed limits. We may want this to be user driven in future.
   schedule.intervals[50] = new Interval(CLOSED, 5);
   schedule.intervals[75] = new Interval(CLOSED, 15);
   schedule.intervals[95] = new Interval(CLOSED, 100);
@@ -418,23 +439,7 @@ $(window).load(function() {
   schedule.intervals[500] = new Interval(CLOSED, 5);
   schedule.intervals[900] = new Interval(CLOSED, 200);
 
-  //sets up the rest of the intervals
-  var start_limit = getStart();
-  //start at unit 50
-  var curr = start_limit + schedule.intervals[start_limit].getSize();
-
-  //creates the interval regions
-  while(curr != start_limit) {
-    if(schedule.intervals[curr] == null) {
-      var size = getSize(curr, start_limit);
-      schedule.intervals[curr] = new Interval(OPEN, size);
-      curr = (curr + size) % schedule.length;
-    } else {
-      var time = schedule.intervals[curr].getSize();
-      curr = (curr + time) % schedule.length;
-    }
-  }
-
+  createIntervals(); //this should be executed when there are interval changes.
   printInfo(schedule.intervals);
   processQueue(queue, waiting);
   printInfo(schedule.intervals);
